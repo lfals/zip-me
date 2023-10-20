@@ -1,15 +1,10 @@
 <script>
 	// @ts-nocheck
+	import ShortUniqueId from "short-unique-id";
 
-	import { onMount } from 'svelte';
 
-	/**
-	 * @type {any}
-	 */
-	let shortLink;
 
-	onMount(() => {
-		shortLink = async (event) => {
+		async function shortLink(event) {
 			const shortened = {
 				url: '',
 				name: ''
@@ -26,30 +21,40 @@
 					shortened.name = pageTitle;
 				})
 				.catch((err) => {
-					console.log(err);
 					shortened.name = new URL(url).hostname;
 				});
 
-			await fetch('/api/hash', {
+			const uid = new ShortUniqueId({ length: 10 });
+
+			const hash = uid.rnd()
+
+			shortened.url =  `https://magi.zip/${hash}`;
+
+			const response = await fetch('/api/hash', {
 				method: 'POST',
-				body: JSON.stringify({ url })
-			}).then(async (res) => {
-				const data = await res.json();
-				const hash = data.hash;
-				shortened.url = `https://magi.zip/${hash}`;
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					hash,
+					url,
+				})
+			}).catch((err) => {
+				console.log(err)
 			});
 
-			const links = JSON.parse(localStorage.getItem('links') || []);
+			await response.json().then((data) => {
+				console.log(data)
+			})
 
-			links.push(shortened);
+			console.log(shortened)
 
-			localStorage.setItem('links', JSON.stringify(links));
 
 			navigator.clipboard.writeText(shortened.url);
 
-			window.location.href = '/my-links';
+			
+
 		};
-	});
 </script>
 
 <div class="flex h-screen flex-col justify-between">

@@ -1,6 +1,7 @@
 <script>
 	// @ts-nocheck
 	import ShortUniqueId from "short-unique-id";
+	import { store } from '$lib/store.js';
 
 		let copied = false
 		let error = false
@@ -54,6 +55,9 @@
 			navigator.clipboard.writeText(shortened.url);
 
 			copied = true
+
+			store.update((n) => [...n, shortened]);
+
 		};
 </script>
 

@@ -1,6 +1,13 @@
 <script>
+	// @ts-nocheck
+
 	const urls = new Array(20).fill(0);
 
+	const links = JSON.parse(localStorage.getItem('links') || []);
+
+	/**
+	 * @param {string} url
+	 */
 	function handleCopy(url) {
 		console.log('copied', url);
 	}
@@ -60,7 +67,7 @@
 	</header>
 	<div class="flex justify-center h-full overflow-auto mb-7">
 		<div class="mt-16 max-w-sm h-full flex flex-col gap-3">
-			{#each urls as url}
+			{#each links as url}
 				<div class="flex w-full justify-center gap-8 mt-2">
 					<p class="font-bold" style="margin-right: 20px;">URl shortener</p>
 					<div class="flex items-center gap-4">

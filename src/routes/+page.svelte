@@ -1,3 +1,57 @@
+<script>
+	// @ts-nocheck
+
+	import { onMount } from 'svelte';
+
+	/**
+	 * @type {any}
+	 */
+	let shortLink;
+
+	onMount(() => {
+		shortLink = async (event) => {
+			const shortened = {
+				url: '',
+				name: ''
+			};
+
+			event.preventDefault();
+			const url = event.target[0].value;
+			await fetch(url)
+				.then(async (res) => {
+					const parser = new DOMParser();
+					const text = await res.text();
+					const html = parser.parseFromString(text, 'text/html');
+					const pageTitle = html.getElementsByTagName('title')[0].innerText;
+					shortened.name = pageTitle;
+				})
+				.catch((err) => {
+					console.log(err);
+					shortened.name = new URL(url).hostname;
+				});
+
+			await fetch('/api/hash', {
+				method: 'POST',
+				body: JSON.stringify({ url })
+			}).then(async (res) => {
+				const data = await res.json();
+				const hash = data.hash;
+				shortened.url = `https://magi.zip/${hash}`;
+			});
+
+			const links = JSON.parse(localStorage.getItem('links') || []);
+
+			links.push(shortened);
+
+			localStorage.setItem('links', JSON.stringify(links));
+
+			navigator.clipboard.writeText(shortened.url);
+
+			window.location.href = '/my-links';
+		};
+	});
+</script>
+
 <div class="flex h-screen flex-col justify-between">
 	<div class="absolute left-0 top-0 -z-10 h-full w-full overflow-hidden">
 		<div
@@ -60,17 +114,18 @@
 							The last shortener <br /> you'll ever need!
 						</h1>
 						<p class="mt-6 text-lg leading-8 text-gray-600">It's simple as that.</p>
-						<div class="mt-10 flex items-center justify-center gap-x-6">
+						<form class="mt-10 flex items-center justify-center gap-x-6" on:submit={shortLink}>
 							<input
-								type="text"
+								type="url"
 								placeholder="place your url in here"
 								class="rounded-md px-3 py-2 w-96 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20"
 							/>
-							<a
+							<button
+								type="submit"
 								class="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline focus-visible:outline-primary"
-								href="/sign-in">make it short</a
+								>make it short</button
 							>
-						</div>
+						</form>
 					</div>
 				</div>
 			</div>

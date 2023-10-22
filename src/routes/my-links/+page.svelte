@@ -1,15 +1,20 @@
 <script>
 	// @ts-nocheck
 
-	const urls = new Array(20).fill(0);
+	import { store } from "$lib/store";
+	import { get } from "svelte/store";
 
-	const links = JSON.parse(localStorage.getItem('links') || []);
+
+	const links = get(store)
+
+	console.log(links);
 
 	/**
 	 * @param {string} url
 	 */
 	function handleCopy(url) {
-		console.log('copied', url);
+		navigator.clipboard.writeText(url);
+
 	}
 </script>
 
@@ -52,27 +57,23 @@
 			</div>
 			<div>
 				<div class=" flex items-center justify-center gap-x-6">
-					<input
-						type="text"
-						placeholder="place your url in here"
-						class="rounded-md px-3 py-2 w-96 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20"
-					/>
+			
 					<a
 						class="rounded-md bg-primary px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline focus-visible:outline-primary"
-						href="/sign-in">make it short</a
+						href="/">make it short</a
 					>
 				</div>
 			</div>
 		</nav>
 	</header>
 	<div class="flex justify-center h-full overflow-auto mb-7">
-		<div class="mt-16 max-w-sm h-full flex flex-col gap-3">
-			{#each links as url}
+		<div class="mt-16 h-full justify-start flex flex-col gap-3">
+			{#each links as link}
 				<div class="flex w-full justify-center gap-8 mt-2">
-					<p class="font-bold" style="margin-right: 20px;">URl shortener</p>
+					<p class="font-bold" style="margin-right: 20px;">{link.name}</p>
 					<div class="flex items-center gap-4">
-						<a target="_blank" href="magi.zip">magi.zip/HSUSKSDSk</a>
-						<button on:click={() => handleCopy(url)}>
+						<a target="_blank" href="magi.zip">{link.url}</a>
+						<button on:click={() => handleCopy(link.url)}>
 							<svg
 								class="hover:cursor-pointer"
 								width="15"

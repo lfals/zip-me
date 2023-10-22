@@ -1,15 +1,12 @@
 <script>
 	// @ts-nocheck
+	import ShortUniqueId from "short-unique-id";
+	import { store } from '$lib/store.js';
 
-	import { onMount } from 'svelte';
+		let copied = false
+		let error = false
 
-	/**
-	 * @type {any}
-	 */
-	let shortLink;
-
-	onMount(() => {
-		shortLink = async (event) => {
+		async function shortLink(event) {
 			const shortened = {
 				url: '',
 				name: ''
@@ -26,30 +23,42 @@
 					shortened.name = pageTitle;
 				})
 				.catch((err) => {
-					console.log(err);
 					shortened.name = new URL(url).hostname;
 				});
 
-			await fetch('/api/hash', {
+			const uid = new ShortUniqueId({ length: 10 });
+
+			const hash = uid.rnd()
+
+			shortened.url =  `https://magi.zip/${hash}`;
+
+			const response = await fetch('/api/hash', {
 				method: 'POST',
-				body: JSON.stringify({ url })
-			}).then(async (res) => {
-				const data = await res.json();
-				const hash = data.hash;
-				shortened.url = `https://magi.zip/${hash}`;
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					hash,
+					url,
+				})
+			}).catch((err) => {
+				console.log(err)
 			});
 
-			const links = JSON.parse(localStorage.getItem('links') || []);
-
-			links.push(shortened);
-
-			localStorage.setItem('links', JSON.stringify(links));
+			await response.json().then((data) => {
+				console.log(data)
+			}).catch((err) => {
+				console.log(err)
+				error = true
+			});
 
 			navigator.clipboard.writeText(shortened.url);
 
-			window.location.href = '/my-links';
+			copied = true
+
+			store.update((n) => [...n, shortened]);
+
 		};
-	});
 </script>
 
 <div class="flex h-screen flex-col justify-between">
@@ -116,6 +125,10 @@
 						<p class="mt-6 text-lg leading-8 text-gray-600">It's simple as that.</p>
 						<form class="mt-10 flex items-center justify-center gap-x-6" on:submit={shortLink}>
 							<input
+							on:focus={() =>{ 
+								copied = false
+								error = false
+								}}
 								type="url"
 								placeholder="place your url in here"
 								class="rounded-md px-3 py-2 w-96 text-sm leading-6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20"
@@ -127,6 +140,14 @@
 							>
 						</form>
 					</div>
+					<p class="mt-2 text-sm text-green-600 flex items-center gap-3"></p>
+
+					{#if copied === true}
+						<p class="mt-2 text-sm text-green-600 flex items-center gap-3">Link copied to clipboard <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.49991 0.877045C3.84222 0.877045 0.877075 3.84219 0.877075 7.49988C0.877075 11.1575 3.84222 14.1227 7.49991 14.1227C11.1576 14.1227 14.1227 11.1575 14.1227 7.49988C14.1227 3.84219 11.1576 0.877045 7.49991 0.877045ZM1.82708 7.49988C1.82708 4.36686 4.36689 1.82704 7.49991 1.82704C10.6329 1.82704 13.1727 4.36686 13.1727 7.49988C13.1727 10.6329 10.6329 13.1727 7.49991 13.1727C4.36689 13.1727 1.82708 10.6329 1.82708 7.49988ZM10.1589 5.53774C10.3178 5.31191 10.2636 5.00001 10.0378 4.84109C9.81194 4.68217 9.50004 4.73642 9.34112 4.96225L6.51977 8.97154L5.35681 7.78706C5.16334 7.59002 4.84677 7.58711 4.64973 7.78058C4.45268 7.97404 4.44978 8.29061 4.64325 8.48765L6.22658 10.1003C6.33054 10.2062 6.47617 10.2604 6.62407 10.2483C6.77197 10.2363 6.90686 10.1591 6.99226 10.0377L10.1589 5.53774Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg></p>
+					{/if}
+					{#if error === true}
+						<p class="mt-2 text-sm text-red-600 flex items-center gap-3">Something went wrong, please try again</p>
+					{/if}
 				</div>
 			</div>
 		</div>
